@@ -250,7 +250,7 @@ function timeAgo(dateStr) {
 // AVAILABILITY POPUP (interns only)
 // ============================================================
 var availabilityInterval = null;
-var AVAILABILITY_TIMEOUT_SECONDS = 10;
+var AVAILABILITY_TIMEOUT_SECONDS = 300;
 
 var __dismissedCheckIds = {};
 
