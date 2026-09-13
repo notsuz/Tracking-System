@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Intern Monitoring - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h3 class="mb-0 fw-bold">
+            <i class="fas fa-user-graduate text-primary"></i> Intern Monitoring
+        </h3>
+        <p class="text-muted mb-0">Live view of all interns</p>
+    </div>
+    <button class="btn btn-outline-primary" onclick="loadStatus()">
+        <i class="fas fa-sync"></i> Refresh
+    </button>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="stat-card primary">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <div class="stat-number" id="totalInterns">0</div>
+                    <div class="stat-label">Total Interns</div>
+                </div>
+                <i class="fas fa-users stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card success">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <div class="stat-number" id="onlineInterns">0</div>
+                    <div class="stat-label">Online</div>
+                </div>
+                <i class="fas fa-circle stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card warning">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <div class="stat-number" id="breakInterns">0</div>
+                    <div class="stat-label">On Break</div>
+                </div>
+                <i class="fas fa-coffee stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card danger">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <div class="stat-number" id="offlineInterns">0</div>
+                    <div class="stat-label">Offline</div>
+                </div>
+                <i class="fas fa-circle stat-icon"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h6 class="mb-0"><i class="fas fa-list text-primary"></i> All Interns</h6>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Status</th>
+                        <th>Duration</th>
+                        <th>Break</th>
+                        <th>Logins</th>
+                        <th>Last Check</th>
+                    </tr>
+                </thead>
+                <tbody id="internsBody">
+                    <tr><td colspan="8" class="text-center text-muted py-4">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function loadStatus() {
+    fetch('/api/reports/current-status/', { credentials: 'same-origin' })
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('totalInterns').textContent = data.total_interns || 0;
+            document.getElementById('onlineInterns').textContent = data.online_interns || 0;
+            document.getElementById('breakInterns').textContent = data.on_break_interns || 0;
+            document.getElementById('offlineInterns').textContent = data.offline_interns || 0;
+
+            const interns = data.interns || [];
+            const tbody = document.getElementById('internsBody');
+            if (!interns.length) {
+                tbody.innerHTML =
+                    '<tr><td colspan="8" class="empty-state">' +
+                    '<i class="fas fa-users"></i>' +
+                    '<p class="mb-0">No interns found</p></td></tr>';
+                return;
+            }
+
+            let html = '';
+            interns.forEach(i => {
+                let statusClass = 'offline', statusText = 'Offline';
+                if (i.status === 'active') { statusClass = 'online'; statusText = 'Online'; }
+                else if (i.status === 'on_break') { statusClass = 'on_break'; statusText = 'On Break'; }
+
+                let checkCell = '—';
+                if (i.pending_check) checkCell = '<span class="badge bg-warning text-dark">Pending</span>';
+                else if (i.last_check_status === 'responded') checkCell = '<span class="badge bg-success">Responded</span>';
+                else if (i.last_check_status === 'missed') checkCell = '<span class="badge bg-danger">Missed</span>';
+
+                html +=
+                    '<tr>' +
+                    '<td><span class="badge bg-secondary">' + i.username + '</span></td>' +
+                    '<td>' + i.name + '</td>' +
+                    '<td>' + i.email + '</td>' +
+                    '<td><span class="status-indicator ' + statusClass + '"></span> ' + statusText + '</td>' +
+                    '<td>' + (i.duration || '00:00:00') + '</td>' +
+                    '<td>' + (i.break_duration || '00:00:00') + '</td>' +
+                    '<td><span class="badge bg-info">' + (i.login_count || 1) + '</span></td>' +
+                    '<td>' + checkCell + '</td>' +
+                    '</tr>';
+            });
+            tbody.innerHTML = html;
+        })
+        .catch(err => console.error(err));
+}
+
+loadStatus();
+setInterval(loadStatus, 30000);
+</script>
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Interns - Team Lead{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h3 class="mb-0" style="font-weight: 700;">
+            <i class="fas fa-users text-primary"></i> Interns
+        </h3>
+        <p class="text-muted mb-0">Send availability checks and manage sessions</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-primary" id="bulkCheckBtn">
+            <i class="fas fa-question-circle"></i> Check Selected
+        </button>
+        <button class="btn btn-outline-primary" onclick="loadInterns()">
+            <i class="fas fa-sync"></i> Refresh
+        </button>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label small text-muted mb-1">Search</label>
+                <input type="text" class="form-control" id="searchInput"
+                       placeholder="Search by username or email...">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">Status</label>
+                <select class="form-select" id="statusFilter">
+                    <option value="">All</option>
+                    <option value="active">Online</option>
+                    <option value="on_break">On Break</option>
+                    <option value="offline">Offline</option>
+                </select>
+            </div>
+            <!-- <div class="col-md-4">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="onlyOnline">
+                    <label class="form-check-label" for="onlyOnline">
+                        Only show online interns
+                    </label>
+                </div>
+            </div> -->
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-users text-primary"></i> All Interns</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th style="width:36px;">
+                            <input type="checkbox" id="selectAllInterns" title="Select all">
+                        </th>
+                        <th>Username</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Status</th>
+                        <th>Duration</th>
+                        <th>Break</th>
+                        <th>Logins</th>
+                        <th>Last Check</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="internsBody">
+                    <tr><td colspan="10" class="text-center text-muted py-4">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/lead-interns.css' %}?v={% now 'U' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/lead-interns.js' %}?v={% now 'U' %}"></script>
+{% endblock %}

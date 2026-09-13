@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Intern{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h3 class="mb-0" style="font-weight: 700;">
+            Good <span id="greeting">Morning</span>, {{ user.first_name|default:user.username }}
+        </h3>
+        <p class="text-muted mb-0">Here's your work summary for today</p>
+    </div>
+</div>
+
+<!-- Active Session Card -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="session-card" id="sessionCard">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                <div>
+                    <span class="session-status" id="sessionStatusBadge">
+                        <span class="dot"></span>
+                        <span id="statusText">Active Session</span>
+                    </span>
+                    <div class="session-timer" id="sessionTimer">00:00:00</div>
+                    <div class="session-meta">
+                        <div><i class="fas fa-sign-in-alt"></i> Login #<span id="loginCountMeta">1</span> today</div>
+                        <div><i class="fas fa-clock"></i> Started: <span id="loginTimeMeta">--:--</span></div>
+                        <div><i class="fas fa-coffee"></i> Break: <span id="breakTimeMeta">00:00:00</span></div>
+                    </div>
+                </div>
+                <div class="d-flex flex-column gap-2">
+                    <button class="btn btn-warning" id="startBreakBtn"
+                            data-bs-toggle="modal" data-bs-target="#breakTypeModal">
+                        <i class="fas fa-coffee"></i> Take Break
+                    </button>
+                    <button class="btn btn-success" id="endBreakBtn" style="display:none;">
+                        <i class="fas fa-check"></i> End Break
+                    </button>
+                    <button class="btn btn-danger" id="endDutyBtn">
+                        <i class="fas fa-stop-circle"></i> End Duty
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="stat-card primary">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-number" id="statDuration">--:--</div>
+                    <div class="stat-label">Duration</div>
+                </div>
+                <i class="fas fa-hourglass-half stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card info">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-number" id="statBreak">00:00</div>
+                    <div class="stat-label">Break Time</div>
+                </div>
+                <i class="fas fa-coffee stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card success">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-number" id="statTasks">0</div>
+                    <div class="stat-label">Tasks</div>
+                </div>
+                <i class="fas fa-tasks stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card warning">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-number" id="statLogins">1</div>
+                    <div class="stat-label">Logins</div>
+                </div>
+                <i class="fas fa-sign-in-alt stat-icon"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tasks -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-tasks text-primary"></i> Today's Tasks</h5>
+        <a href="{% url 'my_tasks' %}" class="btn btn-sm btn-outline-primary">View All</a>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Task</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Deadline</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tasksBody">
+                    <tr><td colspan="5" class="text-center text-muted py-4">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Break Type Modal -->
+<div class="modal fade" id="breakTypeModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-coffee text-warning"></i> Select Break Type
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-3">Choose the reason for your break:</p>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <button class="btn btn-outline-primary w-100 break-type-btn py-3" data-type="lunch">
+                            <i class="fas fa-utensils d-block mb-1" style="font-size: 1.5rem;"></i>
+                            Lunch
+                        </button>
+                    </div>
+                    <div class="col-6">
+                        <button class="btn btn-outline-primary w-100 break-type-btn py-3" data-type="restroom">
+                            <i class="fas fa-restroom d-block mb-1" style="font-size: 1.5rem;"></i>
+                            Restroom
+                        </button>
+                    </div>
+                    <div class="col-6">
+                        <button class="btn btn-outline-primary w-100 break-type-btn py-3" data-type="training">
+                            <i class="fas fa-chalkboard-teacher d-block mb-1" style="font-size: 1.5rem;"></i>
+                            Training
+                        </button>
+                    </div>
+                    <div class="col-6">
+                        <button class="btn btn-outline-primary w-100 break-type-btn py-3" data-type="meeting">
+                            <i class="fas fa-users d-block mb-1" style="font-size: 1.5rem;"></i>
+                            Meeting
+                        </button>
+                    </div>
+                    <div class="col-6">
+                        <button class="btn btn-outline-primary w-100 break-type-btn py-3" data-type="personal">
+                            <i class="fas fa-user d-block mb-1" style="font-size: 1.5rem;"></i>
+                            Personal
+                        </button>
+                    </div>
+                    <div class="col-6">
+                        <button class="btn btn-outline-primary w-100 break-type-btn py-3" data-type="other">
+                            <i class="fas fa-ellipsis-h d-block mb-1" style="font-size: 1.5rem;"></i>
+                            Other
+                        </button>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <label class="form-label small text-muted">Notes (optional)</label>
+                    <input type="text" class="form-control" id="breakNotes" maxlength="255"
+                           placeholder="Add a note about your break...">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/intern-dashboard.css' %}?v={% now 'U' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/intern-dashboard.js' %}?v={% now 'U' %}"></script>
+{% endblock %}

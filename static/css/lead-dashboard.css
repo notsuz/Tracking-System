@@ -1,0 +1,57 @@
+/* ============================================================
+   lead-dashboard.css
+   ============================================================ */
+
+/* ---------- Table ---------- */
+#internsBody td {
+    font-size: 0.9rem;
+    vertical-align: middle;
+}
+
+#internsBody td:nth-child(4),
+#internsBody td:nth-child(5) {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+#internsBody td:first-child .badge {
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    padding: 5px 10px;
+    letter-spacing: 0.3px;
+}
+
+/* ---------- Status dot ---------- */
+.status-indicator {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+
+.status-indicator.online    { background: #1cc88a; }
+.status-indicator.on_break  { background: #f6c23e; }
+.status-indicator.offline   { background: #858796; }
+.status-indicator.alert {
+    background: #e74a3b;
+    animation: pulse-dot 1s infinite;
+}
+
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.5; }
+}
+
+/* ---------- Hover ---------- */
+#internsBody tr:hover {
+    background: #f5f7ff;
+}
+
+/* ---------- Header area ---------- */
+.card-header .badge.bg-secondary {
+    font-size: 0.72rem;
+    font-weight: 500;
+}

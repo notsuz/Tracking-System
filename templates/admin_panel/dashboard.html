@@ -1,0 +1,256 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Admin Panel - InternTrack{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/admin-panel.css' %}?v={% now 'U' %}">
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h3 class="mb-0 fw-bold">
+            <i class="fas fa-shield-alt text-primary"></i> Admin Panel
+        </h3>
+        <p class="text-muted mb-0">System overview and user management</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'admin_panel_create_user' %}" class="btn btn-primary">
+            <i class="fas fa-plus-circle"></i> Create User
+        </a>
+        <a href="{% url 'admin_panel_users' %}" class="btn btn-outline-primary">
+            <i class="fas fa-users"></i> Manage Users
+        </a>
+    </div>
+</div>
+
+<!-- Row 1: User counts -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="stat-card primary">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-number" id="totalUsers">0</div>
+                    <div class="stat-label">Total Users</div>
+                </div>
+                <i class="fas fa-users stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card info">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-number" id="totalInterns">0</div>
+                    <div class="stat-label">Interns</div>
+                </div>
+                <i class="fas fa-user-graduate stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card warning">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-number" id="totalLeads">0</div>
+                    <div class="stat-label">Team Leads</div>
+                </div>
+                <i class="fas fa-user-tie stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card danger">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-number" id="totalAdmins">0</div>
+                    <div class="stat-label">Admins</div>
+                </div>
+                <i class="fas fa-shield-alt stat-icon"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Row 2: Today's analytics -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="stat-card success">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-number" id="todayOnline">0</div>
+                    <div class="stat-label">Online Now</div>
+                </div>
+                <i class="fas fa-circle stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card primary">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-number" id="todayDuration">00:00</div>
+                    <div class="stat-label">Today's Hours</div>
+                </div>
+                <i class="fas fa-hourglass-half stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card info">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-number" id="todayTasks">0</div>
+                    <div class="stat-label">Tasks Completed Today</div>
+                </div>
+                <i class="fas fa-check-circle stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card warning">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-number" id="availRate">0%</div>
+                    <div class="stat-label">Availability Rate</div>
+                </div>
+                <i class="fas fa-bell stat-icon"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Links -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <a href="{% url 'admin_panel_interns' %}" class="card text-decoration-none h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-user-graduate text-primary" style="font-size: 2rem;"></i>
+                <h6 class="mt-2 mb-0">Intern Monitoring</h6>
+                <small class="text-muted">Live intern status</small>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a href="{% url 'admin_panel_attendance' %}" class="card text-decoration-none h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-calendar-check text-success" style="font-size: 2rem;"></i>
+                <h6 class="mt-2 mb-0">Attendance Report</h6>
+                <small class="text-muted">Daily summary</small>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a href="{% url 'admin_panel_tasks' %}" class="card text-decoration-none h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-tasks text-warning" style="font-size: 2rem;"></i>
+                <h6 class="mt-2 mb-0">All Tasks</h6>
+                <small class="text-muted">Every task in the system</small>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a href="{% url 'admin_panel_team_leads' %}" class="card text-decoration-none h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-user-tie text-info" style="font-size: 2rem;"></i>
+                <h6 class="mt-2 mb-0">Team Leads</h6>
+                <small class="text-muted">Lead activity</small>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- Row 3: This week + Availability detail -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-calendar-week text-primary"></i> This Week (Last 7 Days)
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Total Duration</span>
+                    <strong id="weekDuration">00:00</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Total Break Time</span>
+                    <strong id="weekBreak">00:00</strong>
+                </div>
+                <hr class="my-2">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Tasks Assigned</span>
+                    <strong id="weekTasksAssigned">0</strong>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span>Tasks Completed</span>
+                    <strong class="text-success" id="weekTasksCompleted">0</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-bell text-warning"></i> Availability (Last 7 Days)
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Total Checks</span>
+                    <strong id="availTotal">0</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Responded</span>
+                    <strong class="text-success" id="availResponded">0</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Missed</span>
+                    <strong class="text-danger" id="availMissed">0</strong>
+                </div>
+                <hr class="my-2">
+                <div class="d-flex justify-content-between">
+                    <span>Response Rate</span>
+                    <strong class="text-primary" id="availRateDetail">0%</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Users -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="mb-0">
+            <i class="fas fa-user-clock text-primary"></i> Recent Users
+        </h6>
+        <a href="{% url 'admin_panel_users' %}" class="btn btn-sm btn-outline-primary">
+            View All <i class="fas fa-arrow-right"></i>
+        </a>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Must Change PW</th>
+                    </tr>
+                </thead>
+                <tbody id="recentUsersBody">
+                    <tr><td colspan="6" class="text-center text-muted py-4">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/admin-panel.js' %}?v={% now 'U' %}"></script>
+{% endblock %}

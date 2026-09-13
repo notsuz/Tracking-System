@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block title %}Attendance - Intern{% endblock %}
+
+{% block content %}
+<h3 class="mb-4" style="font-weight: 700;"><i class="fas fa-clock text-primary"></i> My Attendance</h3>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card primary">
+            <div class="stat-label">Today's Duration</div>
+            <div class="stat-number" id="todayDuration">--:--</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card info">
+            <div class="stat-label">Today's Breaks</div>
+            <div class="stat-number" id="todayBreak">--:--</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card success">
+            <div class="stat-label">Working Time</div>
+            <div class="stat-number" id="todayWorking">--:--</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card warning">
+            <div class="stat-label">Logins Today</div>
+            <div class="stat-number" id="todayLogins">0</div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-history"></i> Attendance History</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Login</th>
+                        <th>Logout</th>
+                        <th>Duration</th>
+                        <th>Break Time</th>
+                        <th>Working Time</th>
+                        <th>Logins</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="historyBody">
+                    <tr><td colspan="8" class="text-center text-muted py-4">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const token = getToken();
+
+$.ajax({
+    url: '/api/attendance/current/',
+    method: 'GET',
+    headers: { 'Authorization': 'Bearer ' + token },
+    success: function(data) {
+        if (!data.session) return;
+        const s = data.session;
+        document.getElementById('todayDuration').textContent = (s.duration || '--:--').substring(0,5);
+        document.getElementById('todayBreak').textContent = (s.total_break_time || '--:--').substring(0,5);
+        document.getElementById('todayWorking').textContent = (s.working_time || '--:--').substring(0,5);
+        document.getElementById('todayLogins').textContent = s.login_count || 1;
+    }
+});
+
+$.ajax({
+    url: '/api/attendance/history/',
+    method: 'GET',
+    headers: { 'Authorization': 'Bearer ' + token },
+    success: function(data) {
+        const items = data.results || data || [];
+        if (!items.length) {
+            document.getElementById('historyBody').innerHTML =
+                '<tr><td colspan="8" class="empty-state"><i class="fas fa-calendar-times"></i><p class="mb-0">No attendance history</p></td></tr>';
+            return;
+        }
+        let html = '';
+        items.forEach(s => {
+            const badgeClass = s.status === 'active' ? 'bg-success' :
+                              s.status === 'force_logged_out' ? 'bg-danger' : 'bg-secondary';
+            html += `
+                <tr>
+                    <td><strong>${s.date}</strong></td>
+                    <td>${new Date(s.login_time).toLocaleTimeString()}</td>
+                    <td>${s.logout_time ? new Date(s.logout_time).toLocaleTimeString() : '—'}</td>
+                    <td>${(s.duration || '--:--').substring(0,8)}</td>
+                    <td>${(s.total_break_time || '--:--').substring(0,8)}</td>
+                    <td>${(s.working_time || '--:--').substring(0,8)}</td>
+                    <td><span class="badge bg-info">${s.login_count || 1}</span></td>
+                    <td><span class="badge ${badgeClass}">${s.status.replace('_',' ')}</span></td>
+                </tr>
+            `;
+        });
+        document.getElementById('historyBody').innerHTML = html;
+    }
+});
+</script>
+{% endblock %}

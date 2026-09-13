@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Attendance - Team Lead{% endblock %}
+
+{% block content %}
+<h3 class="mb-4" style="font-weight: 700;">
+    <i class="fas fa-calendar-check text-primary"></i> Daily Attendance Summary
+</h3>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-2">
+            <div class="col-md-4">
+                <label class="form-label small text-muted mb-1">Date</label>
+                <input type="date" class="form-control" id="dateFilter">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">Status</label>
+                <select class="form-select" id="statusFilter">
+                    <option value="">All</option>
+                    <option value="active">Active</option>
+                    <option value="completed">Completed</option>
+                    <option value="force_logged_out">Force Logged Out</option>
+                    <option value="no_activity">No Activity</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">&nbsp;</label>
+                <button class="btn btn-primary w-100" onclick="loadSummary()">
+                    <i class="fas fa-filter"></i> Apply Filters
+                </button>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted mb-1">&nbsp;</label>
+                <button class="btn btn-outline-secondary w-100" onclick="loadSummary()">
+                    <i class="fas fa-sync"></i> Refresh
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-list text-primary"></i> Attendance by Intern
+        </h5>
+        <span class="badge bg-secondary" id="rowCount">—</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Intern</th>
+                        <th>Date</th>
+                        <th>Login</th>
+                        <th>Logout</th>
+                        <th>Total Duration</th>
+                        <th>Total Break</th>
+                        <th>Logins</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="summaryBody">
+                    <tr><td colspan="8" class="text-center text-muted py-4">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/lead-attendance.css' %}?v={% now 'U' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/lead-attendance.js' %}?v={% now 'U' %}"></script>
+{% endblock %}

@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Attendance Report - Admin Panel{% endblock %}
+
+{% block content %}
+<h3 class="mb-4 fw-bold">
+    <i class="fas fa-calendar-check text-primary"></i> Attendance Report
+</h3>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-2">
+            <div class="col-md-4">
+                <label class="form-label small text-muted mb-1">Date</label>
+                <input type="date" class="form-control" id="dateFilter">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">Status</label>
+                <select class="form-select" id="statusFilter">
+                    <option value="">All</option>
+                    <option value="active">Active</option>
+                    <option value="paused">Paused</option>
+                    <option value="completed">Completed</option>
+                    <option value="force_logged_out">Force Logged Out</option>
+                    <option value="no_activity">No Activity</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">&nbsp;</label>
+                <button class="btn btn-primary w-100" onclick="loadSummary()">
+                    <i class="fas fa-filter"></i> Apply Filters
+                </button>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted mb-1">&nbsp;</label>
+                <button class="btn btn-outline-secondary w-100" onclick="loadSummary()">
+                    <i class="fas fa-sync"></i> Refresh
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="mb-0"><i class="fas fa-list text-primary"></i> Attendance by Intern</h6>
+        <span class="badge bg-secondary" id="rowCount">—</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Intern</th>
+                        <th>Date</th>
+                        <th>Login</th>
+                        <th>Logout</th>
+                        <th>Total Duration</th>
+                        <th>Total Break</th>
+                        <th>Logins</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="summaryBody">
+                    <tr><td colspan="8" class="text-center text-muted py-4">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('dateFilter').valueAsDate = new Date();
+
+function loadSummary() {
+    const date = document.getElementById('dateFilter').value;
+    const statusFilter = document.getElementById('statusFilter').value;
+
+    let url = '/api/attendance/daily-summary/';
+    if (date) url += '?date=' + date;
+
+    fetch(url, { credentials: 'same-origin' })
+        .then(r => r.json())
+        .then(data => {
+            let rows = data.rows || [];
+            if (statusFilter) {
+                rows = rows.filter(r => r.status === statusFilter);
+            }
+
+            document.getElementById('rowCount').textContent =
+                rows.length + ' row' + (rows.length === 1 ? '' : 's');
+
+            const tbody = document.getElementById('summaryBody');
+            if (!rows.length) {
+                tbody.innerHTML =
+                    '<tr><td colspan="8" class="empty-state">' +
+                    '<i class="fas fa-calendar"></i>' +
+                    '<p class="mb-0">No records for this date</p></td></tr>';
+                return;
+            }
+
+            let html = '';
+            rows.forEach(r => {
+                let badgeClass = 'bg-secondary', label = r.status;
+                if (r.status === 'active') { badgeClass = 'bg-success'; label = 'Active'; }
+                else if (r.status === 'paused') { badgeClass = 'bg-warning text-dark'; label = 'Paused'; }
+                else if (r.status === 'completed') { badgeClass = 'bg-primary'; label = 'Completed'; }
+                else if (r.status === 'force_logged_out') { badgeClass = 'bg-danger'; label = 'Force Logged Out'; }
+                else if (r.status === 'no_activity') { badgeClass = 'bg-light text-muted'; label = 'No Activity'; }
+
+                html +=
+                    '<tr>' +
+                    '<td><strong>' + (r.full_name || r.username) + '</strong><br>' +
+                    '<small class="text-muted">' + r.username + '</small></td>' +
+                    '<td>' + r.date + '</td>' +
+                    '<td>' + (r.login || '—') + '</td>' +
+                    '<td>' + (r.logout || '—') + '</td>' +
+                    '<td><strong>' + (r.total_duration || '00:00:00') + '</strong></td>' +
+                    '<td>' + (r.total_break || '00:00:00') + '</td>' +
+                    '<td><span class="badge bg-info">' + (r.total_logins || 0) + '</span></td>' +
+                    '<td><span class="badge ' + badgeClass + '">' + label + '</span></td>' +
+                    '</tr>';
+            });
+            tbody.innerHTML = html;
+        })
+        .catch(err => console.error(err));
+}
+
+document.getElementById('dateFilter').addEventListener('change', loadSummary);
+document.getElementById('statusFilter').addEventListener('change', loadSummary);
+
+loadSummary();
+</script>
+{% endblock %}

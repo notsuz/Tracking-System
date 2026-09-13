@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}All Tasks - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h3 class="mb-0 fw-bold">
+            <i class="fas fa-tasks text-primary"></i> All Tasks
+        </h3>
+        <p class="text-muted mb-0">Every task assigned in the system</p>
+    </div>
+    <a href="{% url 'assign_task' %}" class="btn btn-primary">
+        <i class="fas fa-plus-circle"></i> Assign New Task
+    </a>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-2">
+            <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">Status</label>
+                <select class="form-select" id="statusFilter">
+                    <option value="">All</option>
+                    <option value="assigned">Assigned</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">Priority</label>
+                <select class="form-select" id="priorityFilter">
+                    <option value="">All</option>
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">&nbsp;</label>
+                <button class="btn btn-primary w-100" onclick="loadTasks()">
+                    <i class="fas fa-filter"></i> Apply Filters
+                </button>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">&nbsp;</label>
+                <button class="btn btn-outline-secondary w-100" onclick="loadTasks()">
+                    <i class="fas fa-sync"></i> Refresh
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="mb-0"><i class="fas fa-list text-primary"></i> Task List</h6>
+        <span class="badge bg-secondary" id="taskCount">—</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Task</th>
+                        <th>Assigned To</th>
+                        <th>Assigned By</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Deadline</th>
+                        <th>Created</th>
+                    </tr>
+                </thead>
+                <tbody id="tasksBody">
+                    <tr><td colspan="7" class="text-center text-muted py-4">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function loadTasks() {
+    const params = new URLSearchParams();
+    const s = document.getElementById('statusFilter').value;
+    const p = document.getElementById('priorityFilter').value;
+    if (s) params.append('status', s);
+    if (p) params.append('priority', p);
+
+    fetch('/api/accounts/admin/all-tasks/?' + params.toString(), { credentials: 'same-origin' })
+        .then(r => r.json())
+        .then(data => {
+            const tasks = data.results || data || [];
+            document.getElementById('taskCount').textContent = tasks.length + ' task' + (tasks.length === 1 ? '' : 's');
+
+            const tbody = document.getElementById('tasksBody');
+            if (!tasks.length) {
+                tbody.innerHTML =
+                    '<tr><td colspan="7" class="empty-state">' +
+                    '<i class="fas fa-clipboard-list"></i>' +
+                    '<p class="mb-0">No tasks match your filters</p></td></tr>';
+                return;
+            }
+
+            let html = '';
+            tasks.forEach(t => {
+                const overdue = t.is_overdue ? ' <span class="badge bg-danger">Overdue</span>' : '';
+                html +=
+                    '<tr>' +
+                    '<td><strong>' + t.title + '</strong></td>' +
+                    '<td><span class="badge bg-secondary">' + (t.assigned_to_name || '—') + '</span></td>' +
+                    '<td><span class="badge bg-light text-dark">' + (t.assigned_by_name || '—') + '</span></td>' +
+                    '<td><span class="priority-badge ' + t.priority + '">' + t.priority + '</span></td>' +
+                    '<td><span class="task-status ' + t.status + '">' + t.status.replace('_', ' ') + '</span></td>' +
+                    '<td>' + (t.deadline ? new Date(t.deadline).toLocaleDateString() : '—') + overdue + '</td>' +
+                    '<td>' + new Date(t.created_at).toLocaleDateString() + '</td>' +
+                    '</tr>';
+            });
+            tbody.innerHTML = html;
+        })
+        .catch(err => {
+            console.error(err);
+            document.getElementById('tasksBody').innerHTML =
+                '<tr><td colspan="7" class="text-center text-danger py-4">Failed to load</td></tr>';
+        });
+}
+
+document.getElementById('statusFilter').addEventListener('change', loadTasks);
+document.getElementById('priorityFilter').addEventListener('change', loadTasks);
+
+loadTasks();
+</script>
+{% endblock %}

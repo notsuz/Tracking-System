@@ -1,0 +1,11 @@
+.login-hero {
+    background: linear-gradient(135deg, #1a1a2e 0%, #2a2a4a 100%);
+    color: #fff;
+}
+.hero-icon { font-size: 5rem; color: #4e73df; }
+.hero-subtitle { opacity: 0.7; max-width: 400px; margin: 0 auto; }
+.hero-features { opacity: 0.6; font-size: 0.9rem; }
+.login-form-wrapper { width: 100%; max-width: 420px; }
+.mobile-logo { font-size: 3rem; color: #4e73df; }
+.toggle-pw { border-color: #ced4da; }
+.toggle-pw:hover { background: #f0f2f7; }

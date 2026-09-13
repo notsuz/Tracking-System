@@ -1,0 +1,68 @@
+/* ============================================================
+   admin-panel.css — Admin dashboard styling
+   ============================================================ */
+
+.stat-card .stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+.stat-card.primary .stat-icon { background: rgba(78, 115, 223, 0.12); color: var(--primary); }
+.stat-card.success .stat-icon { background: rgba(28, 200, 138, 0.12); color: var(--success); }
+.stat-card.warning .stat-icon { background: rgba(246, 194, 62, 0.15); color: #b88a00; }
+.stat-card.danger  .stat-icon { background: rgba(231, 74, 59, 0.12); color: var(--danger); }
+.stat-card.info    .stat-icon { background: rgba(54, 185, 204, 0.12); color: var(--info); }
+
+.role-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+.role-badge.intern    { background: #e3f0ff; color: #4e73df; }
+.role-badge.team_lead { background: #fff3cd; color: #856404; }
+.role-badge.admin     { background: #f8d7da; color: #721c24; }
+
+.badge-pw {
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+.badge-pw.yes { background: #fff3cd; color: #856404; }
+.badge-pw.no  { background: #d4edda; color: #155724; }
+
+#usersBody td:first-child strong,
+#recentUsersBody td:first-child strong {
+    font-family: 'Courier New', monospace;
+    font-size: 0.88rem;
+    letter-spacing: 0.3px;
+    color: var(--primary);
+}
+
+#usersBody .btn-sm {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    margin-right: 3px;
+}
+
+#usersBody tr:hover,
+#recentUsersBody tr:hover {
+    background: #f5f7ff;
+}
+
+.card-header h6 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.card-body .d-flex.justify-content-between {
+    font-size: 0.9rem;
+}

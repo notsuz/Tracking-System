@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Manage Users - Admin{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/admin-panel.css' %}">
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="mb-0 fw-bold"><i class="fas fa-users text-primary"></i> Manage Users</h3>
+    <a href="{% url 'admin_panel_create_user' %}" class="btn btn-primary">
+        <i class="fas fa-plus-circle"></i> Create New User
+    </a>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-2">
+            <div class="col-md-5">
+                <input type="text" class="form-control" id="searchInput"
+                       placeholder="Search by username or email...">
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="roleFilter">
+                    <option value="">All Roles</option>
+                    <option value="intern">Intern</option>
+                    <option value="team_lead">Team Lead</option>
+                    <option value="admin">Super Admin</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <button class="btn btn-primary w-100" onclick="loadUsers()">
+                    <i class="fas fa-sync"></i> Refresh
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Active</th>
+                        <th>Must Change PW</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="usersBody">
+                    <tr><td colspan="7" class="text-center text-muted py-4">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Reset Password Modal -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-key text-warning"></i> Reset Password
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small">
+                    Reset password for <strong id="resetUsername"></strong>.
+                    They will be forced to change it on next login.
+                </p>
+                <label class="form-label">New Password</label>
+                <input type="password" class="form-control" id="resetNewPassword">
+                <div class="form-text">
+                    Min 8 chars, 1 upper, 1 lower, 1 number, 1 special.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-warning" id="confirmResetBtn">
+                    <i class="fas fa-key"></i> Reset Password
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/admin-panel.js' %}"></script>
+{% endblock %}

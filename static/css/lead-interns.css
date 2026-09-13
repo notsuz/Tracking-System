@@ -1,0 +1,89 @@
+/* ============================================================
+   lead-interns.css
+   ============================================================ */
+
+/* ---------- Table ---------- */
+#internsBody td {
+    font-size: 0.88rem;
+    vertical-align: middle;
+}
+
+#internsBody td:first-child {
+    text-align: center;
+}
+
+#internsBody td:nth-child(6),
+#internsBody td:nth-child(7) {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* Username badge */
+#internsBody td:nth-child(2) .badge {
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    padding: 5px 10px;
+    letter-spacing: 0.3px;
+}
+
+/* Email column */
+#internsBody td:nth-child(4) {
+    color: #6c757d;
+    font-size: 0.85rem;
+}
+
+/* ---------- Last Check cell ---------- */
+#internsBody td:nth-child(9) .badge {
+    font-size: 0.7rem;
+    padding: 4px 10px;
+    font-weight: 600;
+    border-radius: 12px;
+    white-space: nowrap;
+}
+
+/* Kill any accidental Bootstrap `.alert` styling inside the table */
+#internsBody .alert,
+#internsBody .status-indicator.alert {
+    all: unset;
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #e74a3b;
+}
+
+/* ---------- Action buttons ---------- */
+#internsBody .btn-sm {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    margin-right: 3px;
+}
+
+/* ---------- Hover ---------- */
+#internsBody tr:hover {
+    background: #f5f7ff;
+}
+
+/* ---------- Filter card ---------- */
+.card-body .form-select,
+.card-body .form-control {
+    border-radius: 8px;
+}
+
+/* ---------- Checkbox column ---------- */
+.intern-checkbox {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.intern-checkbox:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+}
+
+#selectAllInterns {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}

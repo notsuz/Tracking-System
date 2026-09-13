@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Login - InternTrack{% endblock %}
+
+{% block auth_content %}
+<link rel="stylesheet" href="{% static 'css/login.css' %}">
+
+<div class="container-fluid">
+    <div class="row min-vh-100">
+        <div class="col-lg-6 d-none d-lg-flex align-items-center justify-content-center login-hero">
+            <div class="text-center p-5">
+                <i class="fas fa-users-cog hero-icon"></i>
+                <h1 class="mt-4 fw-bold">InternTrack</h1>
+                <p class="mt-3 hero-subtitle">
+                    Track your work hours, breaks, and tasks — all in one place.
+                </p>
+                <div class="mt-5 d-flex justify-content-center gap-4 hero-features">
+                    <div><i class="fas fa-clock"></i> Time Tracking</div>
+                    <div><i class="fas fa-coffee"></i> Break Management</div>
+                    <div><i class="fas fa-tasks"></i> Task Management</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 d-flex align-items-center justify-content-center p-4">
+            <div class="login-form-wrapper">
+                <div class="text-center mb-4 d-lg-none">
+                    <i class="fas fa-users-cog mobile-logo"></i>
+                    <h2 class="mt-2">InternTrack</h2>
+                </div>
+
+                <h2 class="mb-2 fw-bold">Welcome back</h2>
+                <p class="text-muted mb-4">Sign in to your account</p>
+
+                {% if form.errors %}
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle"></i>
+                    Invalid username or password. Please try again.
+                </div>
+                {% endif %}
+
+                {% if messages %}
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+
+                <form method="post" action="{% url 'login' %}" novalidate>
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Username or Email</label>
+                        <input type="text" name="username" class="form-control form-control-lg"
+                               required autofocus autocomplete="username"
+                               placeholder="Enter your username"
+                               value="{{ form.username.value|default:'' }}">
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">Password</label>
+                        <div class="input-group">
+                            <input type="password" name="password" class="form-control form-control-lg"
+                                   required autocomplete="current-password"
+                                   placeholder="••••••••" id="password">
+                            <button type="button" class="btn btn-outline-secondary toggle-pw" id="togglePassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <input type="hidden" name="next" value="{{ next }}">
+                    <button type="submit" class="btn btn-primary btn-lg w-100">
+                        <i class="fas fa-sign-in-alt"></i> Sign In
+                    </button>
+                </form>
+
+                <p class="text-center text-muted mt-4 small mb-0">
+                    Need an account? Contact your <strong>Super Admin</strong>.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('togglePassword')?.addEventListener('click', function() {
+    const inp = document.getElementById('password');
+    const icon = this.querySelector('i');
+    if (inp.type === 'password') {
+        inp.type = 'text';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+    } else {
+        inp.type = 'password';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+    }
+});
+</script>
+{% endblock %}

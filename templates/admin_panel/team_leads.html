@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Team Leads - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h3 class="mb-0 fw-bold">
+            <i class="fas fa-user-tie text-primary"></i> Team Leads
+        </h3>
+        <p class="text-muted mb-0">All team leads and their current activity</p>
+    </div>
+    <button class="btn btn-outline-primary" onclick="loadLeads()">
+        <i class="fas fa-sync"></i> Refresh
+    </button>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="mb-0"><i class="fas fa-list text-primary"></i> Team Lead Activity</h6>
+        <span class="badge bg-secondary" id="leadCount">—</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Status</th>
+                        <th>Login Time</th>
+                        <th>Last Login</th>
+                        <th>Tasks Created Today</th>
+                        <th>Total Tasks Created</th>
+                    </tr>
+                </thead>
+                <tbody id="leadsBody">
+                    <tr><td colspan="8" class="text-center text-muted py-4">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function loadLeads() {
+    fetch('/api/accounts/admin/team-leads/', { credentials: 'same-origin' })
+        .then(r => r.json())
+        .then(data => {
+            const leads = data.leads || [];
+            document.getElementById('leadCount').textContent =
+                leads.length + ' lead' + (leads.length === 1 ? '' : 's');
+
+            const tbody = document.getElementById('leadsBody');
+            if (!leads.length) {
+                tbody.innerHTML =
+                    '<tr><td colspan="8" class="empty-state">' +
+                    '<i class="fas fa-user-tie"></i>' +
+                    '<p class="mb-0">No team leads found</p></td></tr>';
+                return;
+            }
+
+            let html = '';
+            leads.forEach(l => {
+                const statusClass = l.is_online ? 'online' : 'offline';
+                const statusText = l.is_online ? 'Online' : 'Offline';
+
+                html +=
+                    '<tr>' +
+                    '<td><span class="badge bg-secondary">' + l.username + '</span></td>' +
+                    '<td>' + l.name + '</td>' +
+                    '<td>' + l.email + '</td>' +
+                    '<td><span class="status-indicator ' + statusClass + '"></span> ' + statusText + '</td>' +
+                    '<td>' + (l.login_time || '—') + '</td>' +
+                    '<td>' + (l.last_login || '—') + '</td>' +
+                    '<td><span class="badge bg-info">' + l.tasks_created_today + '</span></td>' +
+                    '<td><span class="badge bg-secondary">' + l.tasks_created_total + '</span></td>' +
+                    '</tr>';
+            });
+            tbody.innerHTML = html;
+        })
+        .catch(err => console.error(err));
+}
+
+loadLeads();
+setInterval(loadLeads, 30000);
+</script>
+{% endblock %}
