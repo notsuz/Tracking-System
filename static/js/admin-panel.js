@@ -1,6 +1,21 @@
 /* ============================================================
    admin-panel.js
    ============================================================ */
+function csrf() {
+    return (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
+}
+
+function authHeaders(extra) {
+    return Object.assign(
+        {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrf(),
+        },
+        extra || {}
+    );
+}
+
+
 
 const token = () => localStorage.getItem('access_token');
 const authHeaders = () => ({
