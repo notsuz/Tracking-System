@@ -1,8 +1,13 @@
 /* ============================================================
    admin-panel.js
    ============================================================ */
+
 function csrf() {
     return (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
+}
+
+function token() {
+    return localStorage.getItem('access_token');
 }
 
 function authHeaders(extra) {
@@ -14,14 +19,6 @@ function authHeaders(extra) {
         extra || {}
     );
 }
-
-
-
-const token = () => localStorage.getItem('access_token');
-const authHeaders = () => ({
-    'Authorization': 'Bearer ' + token(),
-    'Content-Type': 'application/json'
-});
 
 // ============================================================
 // DASHBOARD PAGE — Overview + Recent Users
@@ -35,25 +32,21 @@ function loadOverview() {
     fetch('/api/accounts/admin/overview/', { credentials: 'same-origin' })
         .then(r => r.json())
         .then(data => {
-            // Row 1: user counts
             document.getElementById('totalUsers').textContent = data.users.total || 0;
             document.getElementById('totalInterns').textContent = data.users.interns || 0;
             document.getElementById('totalLeads').textContent = data.users.team_leads || 0;
             document.getElementById('totalAdmins').textContent = data.users.admins || 0;
 
-            // Row 2: today
             document.getElementById('todayOnline').textContent = data.today.online || 0;
             document.getElementById('todayDuration').textContent = data.today.total_duration || '00:00';
             document.getElementById('todayTasks').textContent = data.today.tasks_completed || 0;
             document.getElementById('availRate').textContent = data.availability.response_rate || '0%';
 
-            // Row 3: week
             document.getElementById('weekDuration').textContent = data.week.total_duration || '00:00';
             document.getElementById('weekBreak').textContent = data.week.total_break || '00:00';
             document.getElementById('weekTasksAssigned').textContent = data.week.tasks_assigned || 0;
             document.getElementById('weekTasksCompleted').textContent = data.week.tasks_completed || 0;
 
-            // Row 3: availability
             document.getElementById('availTotal').textContent = data.availability.total_checks || 0;
             document.getElementById('availResponded').textContent = data.availability.responded || 0;
             document.getElementById('availMissed').textContent = data.availability.missed || 0;
