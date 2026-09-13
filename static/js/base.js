@@ -284,7 +284,7 @@ function hideAvailabilityPopup() {
     popup.removeAttribute('data-check-id');
 }
 
-// 🔔 Play the availability alert sound
+// Play the availability alert sound
 function playAvailabilitySound() {
     var audio = document.getElementById('availabilitySound');
     if (!audio) return;
@@ -310,9 +310,7 @@ function showAvailabilityPopup(data) {
         return;
     }
 
-    // 🔔 Play the alert sound when the popup shows
-    playAvailabilitySound();
-
+    // Compute remaining time
     var elapsed = 0;
     if (data.created_at) {
         var createdAt = new Date(data.created_at);
@@ -320,12 +318,16 @@ function showAvailabilityPopup(data) {
     }
     var timeLeft = Math.max(0, Math.ceil(AVAILABILITY_TIMEOUT_SECONDS - elapsed));
 
+    // Already expired — no sound, no popup
     if (timeLeft <= 0) {
         __dismissedCheckIds[checkId] = true;
         hideAvailabilityPopup();
         api.post('/api/availability/miss/', { check_id: checkId }).catch(function () {});
         return;
     }
+
+    // Sound plays only when the popup is about to show
+    playAvailabilitySound();
 
     popup.setAttribute('data-check-id', checkId);
     popup.classList.add('show');
@@ -434,4 +436,23 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }, { once: true });
     });
+
+    // ============================================================
+    // PERIODIC AUTH CHECK — catches force logout from ANY page
+    // ============================================================
+    setInterval(function () {
+        fetch('/api/accounts/profile/', { credentials: 'same-origin' })
+            .then(function (r) {
+                if (r.status === 401 || r.status === 403 || r.redirected) {
+                    try {
+                        sessionStorage.setItem(
+                            'logout_reason',
+                            'Your session ended. Please log in again.'
+                        );
+                    } catch (e) { /* ignore */ }
+                    window.location.href = '/login/';
+                }
+            })
+            .catch(function () { /* network error — ignore */ });
+    }, 30000);
 });

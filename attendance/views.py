@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from datetime import timedelta, datetime
+import logging
 
 from .models import AttendanceSession
 from .serializers import (
@@ -14,6 +15,7 @@ from accounts.permissions import IsIntern, IsTeamLeadOrAdmin
 from notifications.models import Notification
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 
 def fmt_duration(td):
@@ -148,7 +150,7 @@ class CurrentAttendanceView(generics.GenericAPIView):
                 completed, False, 'Your duty for today is done.'
             ))
 
-        # 3. Paused today (shouldn't happen while intern is on dashboard)
+        # 3. Paused today
         paused = AttendanceSession.objects.filter(
             user=user, date=today, status='paused'
         ).order_by('-login_time').first()
@@ -295,42 +297,81 @@ class DailyAttendanceSummaryView(generics.GenericAPIView):
 # LEAD — force logout
 
 class ForceLogoutView(generics.GenericAPIView):
+    """
+    POST /api/attendance/force-logout/{user_id}/
+
+    Force-logs-out an intern:
+      1. Closes the attendance session (active OR paused)
+      2. Deletes ALL Django sessions for that user → kicks them off the web app
+      3. Sends a notification
+    """
     permission_classes = [permissions.IsAuthenticated, IsTeamLeadOrAdmin]
 
     def post(self, request, user_id, *args, **kwargs):
+        from django.contrib.sessions.models import Session
+
+        # 1. Find the intern
         try:
             intern = User.objects.get(pk=user_id, role='intern')
         except User.DoesNotExist:
-            return Response({'error': 'Intern not found.'}, status=status.HTTP_404_NOT_FOUND)
-
-        session = AttendanceSession.objects.filter(
-            user=intern, status='active'
-        ).first()
-        if not session:
             return Response(
-                {'error': 'This intern has no active session.'},
+                {'error': 'Intern not found.'},
                 status=status.HTTP_404_NOT_FOUND
             )
 
+        # 2. Find their active OR paused session
+        session = AttendanceSession.objects.filter(
+            user=intern, status__in=['active', 'paused']
+        ).order_by('-login_time').first()
+        if not session:
+            return Response(
+                {'error': 'This intern has no active or paused session.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # 3. End active break
         active_break = session.breaks.filter(status='active').first()
         if active_break:
             active_break.end_break()
 
+        # 4. Resolve pending availability check
         pending = session.availability_checks.filter(status='pending').first()
         if pending:
             pending.auto_miss_if_expired()
             if pending.status == 'pending':
                 pending.mark_missed(notify=False)
 
+        # 5. Force logout the attendance session
         reason = request.data.get('reason', 'Force logged out by Team Lead')
         session.force_logout(reason=reason)
 
+        # 6. Delete ALL Django sessions for this user
+        #    This logs them out at the session level — every browser/tab.
+        deleted_count = 0
+        for s in Session.objects.all():
+            try:
+                data = s.get_decoded()
+                if data.get('_auth_user_id') == str(intern.id):
+                    s.delete()
+                    deleted_count += 1
+            except Exception:
+                continue
+
+        logger.info(
+            f"Force logout: {intern.username} — attendance session #{session.id} closed, "
+            f"{deleted_count} Django session(s) deleted."
+        )
+
+        # 7. Notify the intern
         try:
             Notification.objects.create(
                 recipient=intern,
                 sender=request.user,
                 notification_type='system',
-                message=f'You were logged out by {request.user.username}. Reason: {reason}',
+                message=(
+                    f'You were logged out by {request.user.username}. '
+                    f'Reason: {reason}'
+                ),
                 related_object_id=session.id,
                 related_object_type='AttendanceSession',
             )
@@ -340,4 +381,5 @@ class ForceLogoutView(generics.GenericAPIView):
         return Response({
             'message': f'{intern.username} has been logged out.',
             'session': AttendanceSessionSerializer(session).data,
+            'django_sessions_deleted': deleted_count,
         })

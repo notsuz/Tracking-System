@@ -42,8 +42,7 @@ function parseHMS(str) {
     return (parts[0] || 0) * 3600 + (parts[1] || 0) * 60 + (parts[2] || 0);
 }
 
-// Kill every running timer. Called at the start of loadAttendance()
-// so no interval can ever leak between polls.
+// Kill every running timer
 function stopAllTimers() {
     if (durationInterval) { clearInterval(durationInterval); durationInterval = null; }
     if (breakInterval) { clearInterval(breakInterval); breakInterval = null; }
@@ -63,7 +62,6 @@ function handleForceLogout() {
         );
     } catch (e) { /* ignore */ }
 
-    // Show overlay, then redirect to /logout/
     showForceLogoutOverlay();
 
     setTimeout(function () {
@@ -115,11 +113,25 @@ function showForceLogoutOverlay() {
 
 // ---------- Attendance ----------
 function loadAttendance() {
-    // Always kill any running timers first — prevents duplicated intervals
+    // Always kill any running timers first
     stopAllTimers();
 
     fetch('/api/attendance/current/', { credentials: 'same-origin' })
-        .then(function (r) { return r.json(); })
+        .then(function (r) {
+            // If the Django session was killed (force logout), Django redirects
+            // or returns 401/403. Handle all three cases.
+            if (r.redirected || r.status === 401 || r.status === 403) {
+                try {
+                    sessionStorage.setItem(
+                        'logout_reason',
+                        'You were logged out. Please log in again.'
+                    );
+                } catch (e) {}
+                window.location.href = '/login/';
+                throw new Error('Not authenticated');
+            }
+            return r.json();
+        })
         .then(function (data) {
             if (!data.session) {
                 handleForceLogout();
@@ -128,8 +140,8 @@ function loadAttendance() {
 
             var s = data.session;
 
-            // Force-logged-out → kick to login
-            if (s.status === 'force_logged_out') {
+            // Force-logged-out OR paused → kick to login
+            if (s.status === 'force_logged_out' || s.status === 'paused') {
                 handleForceLogout();
                 return;
             }
@@ -176,7 +188,10 @@ function loadAttendance() {
                 document.getElementById('endBreakBtn').style.display = 'none';
             }
         })
-        .catch(function (err) { console.error('Attendance load failed:', err); });
+        .catch(function (err) {
+            if (err && err.message === 'Not authenticated') return;
+            console.error('Attendance load failed:', err);
+        });
 }
 
 function startDurationCounter(loginTime, completedTodayDuration) {
@@ -306,7 +321,6 @@ document.getElementById('endDutyBtn').addEventListener('click', function () {
         return;
     }
 
-    // Freeze the timer immediately — no more counting
     stopAllTimers();
 
     fetch('/api/attendance/end/', {
@@ -321,11 +335,11 @@ document.getElementById('endDutyBtn').addEventListener('click', function () {
         .then(function (r) { return r.json(); })
         .then(function () {
             showToast('success', 'Duty ended. Have a great day.');
-            loadAttendance();   // shows the frozen final state
+            loadAttendance();
         })
         .catch(function () {
             showToast('error', 'Failed to end duty.');
-            loadAttendance();   // resume display if request failed
+            loadAttendance();
         });
 });
 
