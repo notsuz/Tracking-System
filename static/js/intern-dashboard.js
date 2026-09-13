@@ -59,11 +59,58 @@ function handleForceLogout() {
     try {
         sessionStorage.setItem(
             'logout_reason',
-            'You were logged out by your Team Lead.'
+            'You were logged out by your Team Lead. Please log in again.'
         );
     } catch (e) { /* ignore */ }
 
-    window.location.href = '/logout/';
+    // Show overlay, then redirect to /logout/
+    showForceLogoutOverlay();
+
+    setTimeout(function () {
+        window.location.href = '/logout/';
+    }, 2000);
+}
+
+// ---------- Force logout overlay ----------
+function showForceLogoutOverlay() {
+    var existing = document.getElementById('forceLogoutOverlay');
+    if (existing) existing.remove();
+
+    var overlay = document.createElement('div');
+    overlay.id = 'forceLogoutOverlay';
+    overlay.innerHTML =
+        '<div style="' +
+            'position:fixed;inset:0;background:rgba(15,20,35,0.85);' +
+            'backdrop-filter:blur(4px);z-index:10000;' +
+            'display:flex;align-items:center;justify-content:center;padding:20px;' +
+        '">' +
+            '<div style="' +
+                'background:#fff;border-radius:16px;padding:40px;' +
+                'max-width:420px;width:100%;text-align:center;' +
+                'box-shadow:0 25px 60px rgba(0,0,0,0.3);' +
+            '">' +
+                '<div style="' +
+                    'width:80px;height:80px;background:#f8d7da;color:#721c24;' +
+                    'border-radius:50%;display:inline-flex;align-items:center;' +
+                    'justify-content:center;font-size:2rem;margin-bottom:20px;' +
+                '">' +
+                    '<i class="fas fa-power-off"></i>' +
+                '</div>' +
+                '<h3 style="font-size:1.3rem;font-weight:700;margin-bottom:8px;color:#2c3e50;">' +
+                    'You were logged out' +
+                '</h3>' +
+                '<p style="color:#7f8c8d;margin-bottom:20px;">' +
+                    'Your Team Lead ended your session. Please log in again.' +
+                '</p>' +
+                '<div style="' +
+                    'width:40px;height:40px;margin:0 auto;' +
+                    'border:4px solid #e3e6f0;border-top-color:#4e73df;' +
+                    'border-radius:50%;animation:spin 0.8s linear infinite;' +
+                '"></div>' +
+                '<style>@keyframes spin { to { transform: rotate(360deg); } }</style>' +
+            '</div>' +
+        '</div>';
+    document.body.appendChild(overlay);
 }
 
 // ---------- Attendance ----------
