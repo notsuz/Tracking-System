@@ -250,11 +250,8 @@ function timeAgo(dateStr) {
 // AVAILABILITY POPUP (interns only)
 // ============================================================
 var availabilityInterval = null;
+var AVAILABILITY_TIMEOUT_SECONDS = 10;
 
-// Must match AVAILABILITY_RESPONSE_TIMEOUT in config/settings.py
-var AVAILABILITY_TIMEOUT_SECONDS = 300;
-
-// Track check ids we've already dismissed (either by responding or timing out)
 var __dismissedCheckIds = {};
 
 function checkAvailability() {
@@ -269,14 +266,12 @@ function checkAvailability() {
 
             var checkId = String(data.id);
             if (__dismissedCheckIds[checkId]) {
-                // Already handled (responded or missed) — do not show again
                 return;
             }
 
             showAvailabilityPopup(data);
         })
         .catch(function () {
-            // 404 = no pending check → hide popup if visible
             hideAvailabilityPopup();
         });
 }
@@ -289,6 +284,21 @@ function hideAvailabilityPopup() {
     popup.removeAttribute('data-check-id');
 }
 
+// 🔔 Play the availability alert sound
+function playAvailabilitySound() {
+    var audio = document.getElementById('availabilitySound');
+    if (!audio) return;
+
+    try { audio.currentTime = 0; } catch (e) { /* ignore */ }
+
+    var p = audio.play();
+    if (p && p.catch) {
+        p.catch(function (err) {
+            console.warn('Sound blocked by browser:', err);
+        });
+    }
+}
+
 function showAvailabilityPopup(data) {
     var popup = document.getElementById('availabilityPopup');
     if (!popup) return;
@@ -296,12 +306,13 @@ function showAvailabilityPopup(data) {
     var checkId = String(data.id);
     var currentId = popup.getAttribute('data-check-id');
 
-    // Already showing this same check? Leave it alone — timer keeps running
     if (popup.classList.contains('show') && currentId === checkId) {
         return;
     }
 
-    // Compute remaining time from created_at
+    // 🔔 Play the alert sound when the popup shows
+    playAvailabilitySound();
+
     var elapsed = 0;
     if (data.created_at) {
         var createdAt = new Date(data.created_at);
@@ -309,16 +320,13 @@ function showAvailabilityPopup(data) {
     }
     var timeLeft = Math.max(0, Math.ceil(AVAILABILITY_TIMEOUT_SECONDS - elapsed));
 
-    // Already expired on arrival — mark dismissed and hide
     if (timeLeft <= 0) {
         __dismissedCheckIds[checkId] = true;
         hideAvailabilityPopup();
-        // Tell the server it's missed
         api.post('/api/availability/miss/', { check_id: checkId }).catch(function () {});
         return;
     }
 
-    // Show it
     popup.setAttribute('data-check-id', checkId);
     popup.classList.add('show');
 
@@ -340,15 +348,10 @@ function showAvailabilityPopup(data) {
 
         if (timeLeft <= 0) {
             clearInterval(availabilityInterval);
-
-            // Mark dismissed so it never shows again
             __dismissedCheckIds[checkId] = true;
-
             popup.classList.remove('show');
             popup.removeAttribute('data-check-id');
             showToast('warning', 'You missed the availability check.');
-
-            // Tell the server it's missed
             api.post('/api/availability/miss/', { check_id: checkId }).catch(function () {});
         }
     }, 1000);
@@ -359,10 +362,7 @@ function showAvailabilityPopup(data) {
         btn.textContent = "I'm Here";
         btn.onclick = function () {
             clearInterval(availabilityInterval);
-
-            // Mark dismissed immediately so a stale poll won't re-show it
             __dismissedCheckIds[checkId] = true;
-
             respondAvailability(checkId);
             popup.classList.remove('show');
             popup.removeAttribute('data-check-id');
@@ -408,12 +408,30 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!isUserAuthenticated()) return;
 
     loadNotificationCount();
-    setInterval(loadNotificationCount, 30000);   // dev: 10s. Use 30000 in prod.
+    setInterval(loadNotificationCount, 30000);
 
     updateSidebarTaskCount();
 
     if (getUserRole() === 'intern') {
         setTimeout(checkAvailability, 500);
-        setInterval(checkAvailability, 30000);     // dev: 3s. Use 30000 in prod.
+        setInterval(checkAvailability, 30000);
     }
+
+    // Unlock audio on first user interaction (browser autoplay policy)
+    ['click', 'keydown', 'touchstart'].forEach(function (evt) {
+        document.addEventListener(evt, function unlockOnce() {
+            var audio = document.getElementById('availabilitySound');
+            if (audio) {
+                audio.volume = 0;
+                audio.play().then(function () {
+                    audio.pause();
+                    audio.currentTime = 0;
+                    audio.volume = 1;
+                }).catch(function () { /* ignore */ });
+            }
+            ['click', 'keydown', 'touchstart'].forEach(function (e2) {
+                document.removeEventListener(e2, unlockOnce);
+            });
+        }, { once: true });
+    });
 });
