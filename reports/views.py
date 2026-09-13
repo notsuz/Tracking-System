@@ -79,22 +79,64 @@ class DailyReportView(generics.GenericAPIView):
         responded_checks = availability_checks.filter(status='responded').count()
         missed_checks = availability_checks.filter(status='missed').count()
 
-        # ---------- Per-intern breakdown ----------
+        # ---------- Per-intern breakdown (aggregated per day) ----------
         intern_breakdown = []
+        seen_interns = set()
+
         for s in sessions:
             intern = s.user
+            if intern.id in seen_interns:
+                continue
+            seen_interns.add(intern.id)
+
+            # All sessions for this intern on this date
+            intern_sessions = [x for x in sessions if x.user_id == intern.id]
+            intern_sessions.sort(key=lambda x: x.login_time)
+
+            total_session_duration = timedelta(0)
+            total_session_break = timedelta(0)
+            total_logins = 0
+            has_active = False
+            first_login = None
+            last_logout = None
+
+            for is_ in intern_sessions:
+                total_session_duration += is_.duration
+                total_session_break += is_.total_break_time
+                total_logins += (is_.login_count or 0)
+
+                if is_.status == 'active':
+                    has_active = True
+                if first_login is None or is_.login_time < first_login:
+                    first_login = is_.login_time
+                if is_.logout_time and (last_logout is None or is_.logout_time > last_logout):
+                    last_logout = is_.logout_time
+
+            # Status resolution
+            last_status = intern_sessions[-1].status
+            if has_active:
+                status_value = 'active'
+            elif last_status == 'force_logged_out':
+                status_value = 'force_logged_out'
+            elif last_status == 'paused':
+                status_value = 'paused'
+            else:
+                status_value = 'completed'
+
             intern_tasks = tasks.filter(assigned_to=intern)
+
             intern_breakdown.append({
                 'user_id': intern.id,
                 'username': intern.username,
                 'full_name': intern.get_full_name() or intern.username,
-                'login_time': fmt_time(s.login_time),
-                'logout_time': fmt_time(s.logout_time),
-                'duration': fmt_duration(s.duration),
-                'break_time': fmt_duration(s.total_break_time),
-                'working_time': fmt_duration(s.working_time),
-                'login_count': s.login_count,
-                'status': s.status,
+                'login_time': fmt_time(first_login) or '—',
+                'logout_time': fmt_time(last_logout) if last_logout else '—',
+                'duration': fmt_duration(total_session_duration),
+                'break_time': fmt_duration(total_session_break),
+                'working_time': fmt_duration(total_session_duration - total_session_break),
+                'login_count': total_logins,
+                'session_count': len(intern_sessions),
+                'status': status_value,
                 'tasks_assigned': intern_tasks.count(),
                 'tasks_completed': intern_tasks.filter(status='completed').count(),
             })
