@@ -253,21 +253,28 @@ class AdminOverviewView(generics.GenericAPIView):
 
 
 class AdminTeamLeadsView(generics.GenericAPIView):
-    """GET /api/accounts/admin/team-leads/ — live status of team leads."""
+    """
+    GET /api/accounts/admin/team-leads/ — status of all team leads.
+
+    Team leads don't have attendance sessions, so we detect "online"
+    by checking if their last_login is within the last 15 minutes.
+    """
     permission_classes = [permissions.IsAuthenticated, IsSuperAdmin]
 
     def get(self, request, *args, **kwargs):
-        from attendance.models import AttendanceSession
         from tasks.models import Task
 
         leads = User.objects.filter(role='team_lead', is_active=True).order_by('username')
         today = timezone.now().date()
+        now = timezone.now()
         rows = []
 
         for lead in leads:
-            session = AttendanceSession.objects.filter(
-                user=lead, date=today, status='active'
-            ).first()
+            # Team lead is "online" if last_login within 15 minutes
+            is_online = False
+            if lead.last_login:
+                elapsed = (now - lead.last_login).total_seconds()
+                is_online = elapsed < 15 * 60   # 15 minutes
 
             tasks_created_today = Task.objects.filter(
                 assigned_by=lead, created_at__date=today
@@ -280,9 +287,12 @@ class AdminTeamLeadsView(generics.GenericAPIView):
                 'username': lead.username,
                 'name': lead.get_full_name() or lead.username,
                 'email': lead.email,
-                'is_online': bool(session),
-                'login_time': session.login_time.strftime('%I:%M %p') if session else None,
-                'last_login': lead.last_login.strftime('%Y-%m-%d %I:%M %p') if lead.last_login else None,
+                'is_online': is_online,
+                'login_time': None,   # team leads don't have login sessions
+                'last_login': (
+                    lead.last_login.strftime('%Y-%m-%d %I:%M %p')
+                    if lead.last_login else None
+                ),
                 'tasks_created_today': tasks_created_today,
                 'tasks_created_total': tasks_created_total,
             })
