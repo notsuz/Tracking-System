@@ -71,6 +71,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'core.middleware.ForcePasswordChangeMiddleware',
+    'core.middleware.UpdateLastSeenMiddleware',      
 ]
 
 
