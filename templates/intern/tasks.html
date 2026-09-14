@@ -44,6 +44,69 @@
         <p class="mt-2">Loading tasks...</p>
     </div>
 </div>
+
+<!-- Task Detail Modal -->
+<div class="modal fade" id="taskDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-tasks text-primary"></i> Task Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <span class="priority-badge" id="detailPriority">—</span>
+                    <span class="task-status" id="detailStatus">—</span>
+                </div>
+
+                <h4 id="detailTitle" class="fw-bold mb-3">—</h4>
+
+                <div class="mb-3">
+                    <h6 class="text-muted small text-uppercase mb-1">Description</h6>
+                    <p id="detailDescription" class="mb-0" style="white-space: pre-wrap;">—</p>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6 mb-2">
+                        <h6 class="text-muted small text-uppercase mb-1">Assigned By</h6>
+                        <p id="detailAssignedBy" class="mb-0">—</p>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <h6 class="text-muted small text-uppercase mb-1">Deadline</h6>
+                        <p id="detailDeadline" class="mb-0">—</p>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6 mb-2">
+                        <h6 class="text-muted small text-uppercase mb-1">Created</h6>
+                        <p id="detailCreated" class="mb-0">—</p>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <h6 class="text-muted small text-uppercase mb-1">Completed</h6>
+                        <p id="detailCompleted" class="mb-0">—</p>
+                    </div>
+                </div>
+
+                <div id="detailNotesSection" class="mb-0" style="display:none;">
+                    <h6 class="text-muted small text-uppercase mb-1">Notes</h6>
+                    <p id="detailNotes" class="mb-0" style="white-space: pre-wrap;">—</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline-warning" id="detailStartBtn" style="display:none;">
+                    <i class="fas fa-play"></i> Start Working
+                </button>
+                <button class="btn btn-outline-success" id="detailDoneBtn" style="display:none;">
+                    <i class="fas fa-check"></i> Mark as Done
+                </button>
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_css %}
