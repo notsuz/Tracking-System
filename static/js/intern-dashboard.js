@@ -1,6 +1,6 @@
 /* ============================================================
    intern-dashboard.js — session-cookie authentication
-   Day totals across multiple sessions; timers stop on logout
+   Day totals across multiple sessions; End Duty logs out
    ============================================================ */
 
 function getCookie(name) {
@@ -113,13 +113,10 @@ function showForceLogoutOverlay() {
 
 // ---------- Attendance ----------
 function loadAttendance() {
-    // Always kill any running timers first
     stopAllTimers();
 
     fetch('/api/attendance/current/', { credentials: 'same-origin' })
         .then(function (r) {
-            // If the Django session was killed (force logout), Django redirects
-            // or returns 401/403. Handle all three cases.
             if (r.redirected || r.status === 401 || r.status === 403) {
                 try {
                     sessionStorage.setItem(
@@ -140,7 +137,6 @@ function loadAttendance() {
 
             var s = data.session;
 
-            // Force-logged-out OR paused → kick to login
             if (s.status === 'force_logged_out' || s.status === 'paused') {
                 handleForceLogout();
                 return;
@@ -151,19 +147,16 @@ function loadAttendance() {
             var completedToday = data.completed_today_duration || '0:00:00';
             var sessionCount = data.session_count || 1;
 
-            // ---- Stat cards ----
             document.getElementById('statDuration').textContent = dayDuration.substring(0, 5);
             document.getElementById('statBreak').textContent = dayBreak.substring(0, 5);
             document.getElementById('statLogins').textContent = s.login_count || 1;
 
-            // ---- Meta line ----
             var countLabel = sessionCount + ' session' + (sessionCount > 1 ? 's' : '') + ' today';
             document.getElementById('loginCountMeta').textContent = countLabel;
             document.getElementById('loginTimeMeta').textContent =
                 new Date(s.login_time).toLocaleTimeString();
             document.getElementById('breakTimeMeta').textContent = dayBreak;
 
-            // ---- Active: run timers ----
             if (s.status === 'active') {
                 document.getElementById('statusText').textContent = 'Active Session';
                 document.getElementById('sessionCard').classList.remove('completed');
@@ -176,7 +169,7 @@ function loadAttendance() {
                 return;
             }
 
-            // ---- Completed: freeze, no timers ----
+            // Completed: this only shows briefly before redirect on End Duty
             if (s.status === 'completed') {
                 document.getElementById('statusText').textContent = 'Session Completed';
                 document.getElementById('sessionCard').classList.add('completed');
@@ -332,10 +325,37 @@ document.getElementById('endDutyBtn').addEventListener('click', function () {
         },
         body: JSON.stringify({ daily_summary: summary.trim() }),
     })
-        .then(function (r) { return r.json(); })
-        .then(function () {
+        .then(function (r) {
+            return r.json().then(function (b) { return { ok: r.ok, body: b }; });
+        })
+        .then(function (res) {
+            if (!res.ok) {
+                var msg = (res.body && res.body.error) || 'Failed to end duty.';
+                showToast('error', msg);
+                loadAttendance();
+                return;
+            }
+
+            // Success — show message, freeze UI, then log out
             showToast('success', 'Duty ended. Have a great day.');
-            loadAttendance();
+
+            try {
+                sessionStorage.setItem(
+                    'logout_reason',
+                    'You ended your duty for today. See you tomorrow.'
+                );
+            } catch (e) { /* ignore */ }
+
+            document.getElementById('statusText').textContent = 'Session Completed';
+            document.getElementById('sessionCard').classList.add('completed');
+            document.getElementById('startBreakBtn').disabled = true;
+            document.getElementById('endDutyBtn').disabled = true;
+            document.getElementById('startBreakBtn').style.display = 'inline-block';
+            document.getElementById('endBreakBtn').style.display = 'none';
+
+            setTimeout(function () {
+                window.location.href = '/logout/';
+            }, 2000);
         })
         .catch(function () {
             showToast('error', 'Failed to end duty.');
@@ -352,6 +372,8 @@ function loadTasks() {
             document.getElementById('statTasks').textContent = tasks.length;
 
             var tbody = document.getElementById('tasksBody');
+            if (!tbody) return;
+
             if (!tasks.length) {
                 tbody.innerHTML =
                     '<tr><td colspan="5" class="empty-state">' +
